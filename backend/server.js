@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
 
+const authRoutes = require('./routes/authRoutes');
+
 const app = express();
 
 // Middleware
@@ -16,8 +18,10 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/mern-app'
 
 // Routes
 app.get('/', (req, res) => {
-  res.json({ message: 'MERN API is running' });
+  res.json({ message: 'HealthVillage Telemedicine API is running' });
 });
+
+app.use('/api/auth', authRoutes);
 
 // Start Server
 const PORT = process.env.PORT || 5000;
