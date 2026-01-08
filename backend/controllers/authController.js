@@ -5,11 +5,11 @@ const jwt = require('jsonwebtoken');
 // Register
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+      const { name, email, password, phone, role, age, gender, village, specialization, yearsOfExperience, availabilitySlots } = req.body;
 
-    // Validate input
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: 'All fields are required' });
+      // Validate common fields
+      if (!name || !email || !password || !phone) {
+          return res.status(400).json({ message: 'name, email, password, and phone are required' });
     }
 
     // Check if user exists
@@ -18,17 +18,46 @@ exports.register = async (req, res) => {
       return res.status(409).json({ message: 'Email already registered' });
     }
 
+      const userRole = role || 'patient';
+
+      // Validate role-specific fields
+      if (userRole === 'patient') {
+          if (!age || !gender || !village) {
+              return res.status(400).json({ message: 'Patient registration requires: age, gender, village' });
+          }
+      }
+
+      if (userRole === 'doctor') {
+          if (!specialization || yearsOfExperience === undefined) {
+              return res.status(400).json({ message: 'Doctor registration requires: specialization, yearsOfExperience' });
+          }
+      }
+
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user
-    const user = new User({
+      // Create user with role-specific fields
+      const userData = {
       name,
       email,
       password: hashedPassword,
-      role: role || 'patient'
-    });
+          phone,
+          role: userRole
+      };
 
+      if (userRole === 'patient') {
+          userData.age = age;
+          userData.gender = gender;
+          userData.village = village;
+      }
+
+      if (userRole === 'doctor') {
+          userData.specialization = specialization;
+          userData.yearsOfExperience = yearsOfExperience;
+          userData.availabilitySlots = availabilitySlots || [];
+      }
+
+      const user = new User(userData);
     await user.save();
 
     // Generate JWT
@@ -36,8 +65,20 @@ exports.register = async (req, res) => {
       expiresIn: '7d'
     });
 
-    res.status(201).json({ message: 'User registered successfully', token, user: { id: user._id, name, email, role: user.role } });
+      const responseUser = user.toObject();
+      delete responseUser.password;
+
+      res.status(201).json({
+          message: 'User registered successfully',
+          token,
+          user: responseUser
+      });
   } catch (error) {
+      // Handle MongoDB validation errors
+      if (error.name === 'ValidationError') {
+          const messages = Object.values(error.errors).map(err => err.message);
+          return res.status(400).json({ message: 'Validation error', errors: messages });
+      }
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
