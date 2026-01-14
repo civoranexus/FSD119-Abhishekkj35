@@ -7,6 +7,7 @@ const authRoutes = require('./routes/authRoutes');
 const appointmentRoutes = require('./routes/appointmentRoutes');
 const consultationRoutes = require('./routes/consultationRoutes');
 const ehrRoutes = require('./routes/ehrRoutes');
+const prescriptionRoutes = require('./routes/prescriptionRoutes');
 
 const app = express();
 
@@ -28,6 +29,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/consultations', consultationRoutes);
 app.use('/api/ehr', ehrRoutes);
+app.use('/api/prescriptions', prescriptionRoutes);
 
 // Start Server
 const PORT = process.env.PORT || 5000;
