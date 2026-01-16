@@ -9,6 +9,7 @@ const consultationRoutes = require('./routes/consultationRoutes');
 const ehrRoutes = require('./routes/ehrRoutes');
 const prescriptionRoutes = require('./routes/prescriptionRoutes');
 const reminderRoutes = require('./routes/reminderRoutes');
+const analyticsRoutes = require('./routes/analyticsRoutes');
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.use('/api/consultations', consultationRoutes);
 app.use('/api/ehr', ehrRoutes);
 app.use('/api/prescriptions', prescriptionRoutes);
 app.use('/api/reminders', reminderRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Start Server
 const PORT = process.env.PORT || 5000;
