@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from "../../context/AuthContext";
+import { authService } from "../../services/api";
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -114,23 +115,8 @@ const RegisterPage = () => {
         payload.yearsOfExperience = parseInt(formData.yearsOfExperience);
       }
 
-      const response = await fetch("http://localhost:5000/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setErrors({
-          submit: data.message || "Registration failed. Please try again.",
-        });
-        setLoading(false);
-        return;
-      }
+      const response = await authService.register(payload);
+      const data = response.data;
 
       // Auto-login after successful registration
       login(data.user, data.token);
@@ -147,9 +133,12 @@ const RegisterPage = () => {
         navigate(dashboardRoute[data.user.role] || "/");
       }, 1000);
     } catch (err) {
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        "An error occurred. Please check your connection and try again.";
       setErrors({
-        submit:
-          "An error occurred. Please check your connection and try again.",
+        submit: errorMessage,
       });
     } finally {
       setLoading(false);

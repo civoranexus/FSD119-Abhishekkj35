@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from "../../context/AuthContext";
+import { authService } from "../../services/api";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -16,24 +17,8 @@ const LoginPage = () => {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:5000/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.message || "Login failed. Please try again.");
-        setLoading(false);
-        return;
-      }
+      const response = await authService.login(email, password);
+      const data = response.data;
 
       if (!data.user || !data.token) {
         setError("Invalid response from server. Please try again.");
@@ -57,9 +42,11 @@ const LoginPage = () => {
         navigate(route, { replace: true });
       }, 50);
     } catch (err) {
-      setError(
-        "An error occurred. Please check your connection and try again.",
-      );
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        "An error occurred. Please check your connection and try again.";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
