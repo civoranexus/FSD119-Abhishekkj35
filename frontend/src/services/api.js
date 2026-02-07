@@ -1,8 +1,13 @@
 import axios from 'axios';
 
-// Vite environment variable `VITE_API_URL` should include the `/api` base path, e.g.
-// VITE_API_URL=https://your-backend.onrender.com/api
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// Vite environment variable `VITE_API_URL` may or may not include the `/api` path.
+// The code below normalizes it so either form works:
+// - VITE_API_URL=https://your-backend.onrender.com
+// - VITE_API_URL=https://your-backend.onrender.com/api
+const rawApiUrl = import.meta.env.VITE_API_URL;
+const API_BASE_URL = rawApiUrl
+  ? (rawApiUrl.endsWith('/api') ? rawApiUrl : rawApiUrl.replace(/\/+$/, '') + '/api')
+  : 'http://localhost:5000/api';
 
 // Create axios instance
 const apiClient = axios.create({

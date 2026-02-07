@@ -1,6 +1,8 @@
-const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const store = require('../db/memoryStore');
+
+const JWT_SECRET = process.env.JWT_SECRET || 'secret_key';
 
 // Register
 exports.register = async (req, res) => {
@@ -13,7 +15,7 @@ exports.register = async (req, res) => {
     }
 
     // Check if user exists
-    const existingUser = await User.findOne({ email });
+    const existingUser = store.findUserByEmail(email);
     if (existingUser) {
       return res.status(409).json({ message: 'Email already registered' });
     }
@@ -57,15 +59,14 @@ exports.register = async (req, res) => {
           userData.availabilitySlots = availabilitySlots || [];
       }
 
-      const user = new User(userData);
-    await user.save();
+    const user = store.createUser(userData);
 
     // Generate JWT
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET || 'secret_key', {
+    const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, {
       expiresIn: '7d'
     });
 
-      const responseUser = user.toObject();
+    const responseUser = { ...user };
       delete responseUser.password;
 
       res.status(201).json({
@@ -74,11 +75,6 @@ exports.register = async (req, res) => {
           user: responseUser
       });
   } catch (error) {
-      // Handle MongoDB validation errors
-      if (error.name === 'ValidationError') {
-          const messages = Object.values(error.errors).map(err => err.message);
-          return res.status(400).json({ message: 'Validation error', errors: messages });
-      }
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
@@ -94,7 +90,7 @@ exports.login = async (req, res) => {
     }
 
     // Find user
-    const user = await User.findOne({ email });
+    const user = store.findUserByEmail(email);
     if (!user) {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
@@ -106,7 +102,7 @@ exports.login = async (req, res) => {
     }
 
     // Generate JWT
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET || 'secret_key', {
+    const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, {
       expiresIn: '7d'
     });
 
@@ -119,11 +115,13 @@ exports.login = async (req, res) => {
 // Get current user
 exports.getCurrentUser = async (req, res) => {
   try {
-    const user = await User.findById(req.userId).select('-password');
+    const user = store.findUserById(req.userId);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    res.json(user);
+    const responseUser = { ...user };
+    delete responseUser.password;
+    res.json(responseUser);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }

@@ -1,5 +1,4 @@
-const Appointment = require('../models/Appointment');
-const User = require('../models/User');
+const store = require('../db/memoryStore');
 
 // Helpers
 const isSameDay = (d1, d2) => {
@@ -39,7 +38,7 @@ exports.createAppointment = async (req, res) => {
     if (apptDate <= now) return res.status(400).json({ message: 'Appointment must be in the future' });
 
     // Ensure doctor exists and has role doctor
-    const doctor = await User.findById(doctorId);
+    const doctor = store.findUserById(doctorId);
     if (!doctor || doctor.role !== 'doctor') {
       return res.status(400).json({ message: 'Specified doctor not found' });
     }
@@ -54,29 +53,26 @@ exports.createAppointment = async (req, res) => {
     }
 
     // Prevent double booking: check existing appointments for same doctor, same date & timeSlot not cancelled
-    const existing = await Appointment.findOne({
-      doctorId,
-      appointmentDate: {
-        $gte: new Date(apptDate.getFullYear(), apptDate.getMonth(), apptDate.getDate(), 0, 0, 0),
-        $lt: new Date(apptDate.getFullYear(), apptDate.getMonth(), apptDate.getDate()+1, 0, 0, 0)
-      },
-      timeSlot,
-      status: { $ne: 'cancelled' }
-    });
+    const existing = store.findAppointmentsByQuery({}).find(a =>
+      String(a.doctorId) === String(doctorId) &&
+      isSameDay(new Date(a.appointmentDate), apptDate) &&
+      a.timeSlot === timeSlot &&
+      a.status !== 'cancelled'
+    );
 
     if (existing) {
       return res.status(409).json({ message: 'Time slot already booked for this doctor' });
     }
 
-    const appt = new Appointment({
+    const appt = store.createAppointment({
       patientId,
       doctorId,
       appointmentDate: apptDate,
       timeSlot,
-      consultationType
+      consultationType,
+      status: 'pending'
     });
 
-    await appt.save();
     res.status(201).json({ message: 'Appointment requested', appointment: appt });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
@@ -94,7 +90,7 @@ exports.updateStatus = async (req, res) => {
       return res.status(400).json({ message: 'Invalid status' });
     }
 
-    const appt = await Appointment.findById(id);
+    const appt = store.findAppointmentById(id);
     if (!appt) return res.status(404).json({ message: 'Appointment not found' });
 
     // Only the assigned doctor can change status (or admin via separate route)
@@ -105,24 +101,19 @@ exports.updateStatus = async (req, res) => {
     // If confirming, ensure no other confirmed appointment exists for same doctor/date/timeSlot
     if (status === 'confirmed') {
       const apptDate = new Date(appt.appointmentDate);
-      const conflict = await Appointment.findOne({
-        _id: { $ne: appt._id },
-        doctorId: appt.doctorId,
-        appointmentDate: {
-          $gte: new Date(apptDate.getFullYear(), apptDate.getMonth(), apptDate.getDate(), 0, 0, 0),
-          $lt: new Date(apptDate.getFullYear(), apptDate.getMonth(), apptDate.getDate()+1, 0, 0, 0)
-        },
-        timeSlot: appt.timeSlot,
-        status: 'confirmed'
-      });
+      const conflict = store.findAppointmentsByQuery({}).find(a =>
+        String(a._id) !== String(appt._id) &&
+        String(a.doctorId) === String(appt.doctorId) &&
+        isSameDay(new Date(a.appointmentDate), apptDate) &&
+        a.timeSlot === appt.timeSlot &&
+        a.status === 'confirmed'
+      );
 
       if (conflict) return res.status(409).json({ message: 'Conflict: another appointment already confirmed for this slot' });
     }
 
-    appt.status = status;
-    await appt.save();
-
-    res.json({ message: 'Status updated', appointment: appt });
+    const updated = store.updateAppointment(id, { status });
+    res.json({ message: 'Status updated', appointment: updated });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
@@ -147,13 +138,11 @@ exports.setAvailability = async (req, res) => {
       if (toMinutes(s.startTime) >= toMinutes(s.endTime)) return res.status(400).json({ message: 'startTime must be before endTime' });
     }
 
-    const user = await User.findById(userId);
+    const user = store.findUserById(userId);
     if (!user || user.role !== 'doctor') return res.status(403).json({ message: 'Only doctors can set availability' });
 
-    user.availabilitySlots = availabilitySlots;
-    await user.save();
-
-    res.json({ message: 'Availability updated', availabilitySlots: user.availabilitySlots });
+    const updated = store.updateUser(userId, { availabilitySlots });
+    res.json({ message: 'Availability updated', availabilitySlots: updated.availabilitySlots });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
@@ -165,19 +154,25 @@ exports.getAppointments = async (req, res) => {
     const userId = req.userId;
     const role = (req.userRole || '').toLowerCase();
 
-    let filter = {};
+    let appts = [];
     if (role === 'admin') {
-      filter = {};
+      appts = store.getAllAppointments();
     } else if (role === 'doctor') {
-      filter = { doctorId: userId };
+      appts = store.findAppointmentsByDoctorId(userId);
     } else if (role === 'patient') {
-      filter = { patientId: userId };
+      appts = store.findAppointmentsByPatientId(userId);
     } else {
       return res.status(403).json({ message: 'Forbidden' });
     }
 
-    const appts = await Appointment.find(filter).populate('patientId', 'name email role village').populate('doctorId', 'name email role specialization');
-    res.json({ appointments: appts });
+    // Populate patient and doctor info
+    const appointmentsWithDetails = appts.map(a => ({
+      ...a,
+      patient: store.findUserById(a.patientId),
+      doctor: store.findUserById(a.doctorId)
+    }));
+
+    res.json({ appointments: appointmentsWithDetails });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
@@ -186,7 +181,11 @@ exports.getAppointments = async (req, res) => {
 // Get all available doctors with specialization
 exports.getAvailableDoctors = async (req, res) => {
   try {
-    const doctors = await User.find({ role: 'doctor' }).select('name specialization yearsOfExperience availabilitySlots -password');
+    const doctors = store.getAllDoctors().map(d => {
+      const doc = { ...d };
+      delete doc.password;
+      return doc;
+    });
     res.json(doctors);
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
@@ -203,13 +202,11 @@ exports.adminUpdateStatus = async (req, res) => {
       return res.status(400).json({ message: 'Invalid status' });
     }
 
-    const appt = await Appointment.findById(id);
+    const appt = store.findAppointmentById(id);
     if (!appt) return res.status(404).json({ message: 'Appointment not found' });
 
-    appt.status = status;
-    await appt.save();
-
-    res.json({ message: 'Status updated by admin', appointment: appt });
+    const updated = store.updateAppointment(id, { status });
+    res.json({ message: 'Status updated by admin', appointment: updated });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }

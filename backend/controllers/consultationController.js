@@ -1,6 +1,4 @@
-const ConsultationSession = require('../models/ConsultationSession');
-const Appointment = require('../models/Appointment');
-const User = require('../models/User');
+const store = require('../db/memoryStore');
 const crypto = require('crypto');
 
 // Generate secure session ID (format: HS-<timestamp>-<random>)
@@ -21,7 +19,7 @@ exports.initiateSession = async (req, res) => {
     }
 
     // Find appointment
-    const appt = await Appointment.findById(appointmentId);
+    const appt = store.findAppointmentById(appointmentId);
     if (!appt) {
       return res.status(404).json({ message: 'Appointment not found' });
     }
@@ -36,30 +34,18 @@ exports.initiateSession = async (req, res) => {
       return res.status(400).json({ message: 'Appointment must be confirmed before starting consultation' });
     }
 
-    // Check if session already exists
-    const existingSession = await ConsultationSession.findOne({ appointmentId });
-    if (existingSession && existingSession.status !== 'completed' && existingSession.status !== 'cancelled') {
-      return res.status(409).json({ message: 'Active session already exists for this appointment' });
-    }
-
     // Create new session
     const sessionId = generateSessionId();
-    const session = new ConsultationSession({
+    const session = store.createConsultation({
       appointmentId,
       sessionId,
       patientId: appt.patientId,
       doctorId: appt.doctorId,
-      consultationType: appt.consultationType,
-      status: 'scheduled'
+      status: 'initiated',
+      startTime: new Date(),
     });
 
-    await session.save();
-
-    res.status(201).json({
-      message: 'Consultation session created',
-      session,
-      sessionToken: sessionId
-    });
+    res.status(201).json({ message: 'Consultation session initiated', session });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
@@ -68,14 +54,23 @@ exports.initiateSession = async (req, res) => {
 // Start session (transition from scheduled → live)
 exports.startSession = async (req, res) => {
   try {
-    const userId = req.userId;
-    const { sessionId } = req.body;
+    const { sessionId } = req.params;
 
     if (!sessionId) {
       return res.status(400).json({ message: 'sessionId is required' });
     }
 
-    const session = await ConsultationSession.findOne({ sessionId });
+    const session = store.findConsultationById(sessionId);
+    if (!session) {
+      return res.status(404).json({ message: 'Consultation not found' });
+    }
+
+    const updated = store.updateConsultation(sessionId, { status: 'ongoing', sessionStartTime: new Date() });
+    res.json({ message: 'Consultation session started', session: updated });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
     if (!session) {
       return res.status(404).json({ message: 'Session not found' });
     }
