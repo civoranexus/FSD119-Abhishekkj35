@@ -5,6 +5,9 @@ const appointmentController = require('../controllers/appointmentController');
 const authMiddleware = require('../middleware/authMiddleware');
 const { isPatient, isDoctor, isAdmin } = require('../middleware/rbac');
 
+// Get all available doctors (must be before /:id routes)
+router.get('/doctors/available', appointmentController.getAvailableDoctors);
+
 // Patient books
 router.post('/', authMiddleware, isPatient, appointmentController.createAppointment);
 

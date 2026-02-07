@@ -1,27 +1,29 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from "../../context/AuthContext";
 
 const RegisterPage = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    password: '',
-    confirmPassword: '',
-    role: 'patient',
+    name: "",
+    email: "",
+    phone: "",
+    password: "",
+    confirmPassword: "",
+    role: "patient",
     // Patient fields
-    age: '',
-    gender: '',
-    village: '',
+    age: "",
+    gender: "",
+    village: "",
     // Doctor fields
-    specialization: '',
-    yearsOfExperience: '',
+    specialization: "",
+    yearsOfExperience: "",
   });
 
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState("");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -33,7 +35,7 @@ const RegisterPage = () => {
     if (errors[name]) {
       setErrors((prev) => ({
         ...prev,
-        [name]: '',
+        [name]: "",
       }));
     }
   };
@@ -42,40 +44,41 @@ const RegisterPage = () => {
     const newErrors = {};
 
     // Common validation
-    if (!formData.name.trim()) newErrors.name = 'Full name is required';
-    if (!formData.email.trim()) newErrors.email = 'Email is required';
+    if (!formData.name.trim()) newErrors.name = "Full name is required";
+    if (!formData.email.trim()) newErrors.email = "Email is required";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Invalid email format';
+      newErrors.email = "Invalid email format";
     }
-    if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
-    if (!/^\d{10}$/.test(formData.phone.replace(/\D/g, ''))) {
-      newErrors.phone = 'Phone number must be 10 digits';
+    if (!formData.phone.trim()) newErrors.phone = "Phone number is required";
+    if (!/^\d{10}$/.test(formData.phone.replace(/\D/g, ""))) {
+      newErrors.phone = "Phone number must be 10 digits";
     }
-    if (!formData.password) newErrors.password = 'Password is required';
+    if (!formData.password) newErrors.password = "Password is required";
     if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+      newErrors.password = "Password must be at least 6 characters";
     }
     if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
+      newErrors.confirmPassword = "Passwords do not match";
     }
 
     // Role-specific validation
-    if (formData.role === 'patient') {
-      if (!formData.age) newErrors.age = 'Age is required';
+    if (formData.role === "patient") {
+      if (!formData.age) newErrors.age = "Age is required";
       if (isNaN(formData.age) || formData.age < 1 || formData.age > 120) {
-        newErrors.age = 'Please enter a valid age';
+        newErrors.age = "Please enter a valid age";
       }
-      if (!formData.gender) newErrors.gender = 'Gender is required';
-      if (!formData.village.trim()) newErrors.village = 'Village is required';
+      if (!formData.gender) newErrors.gender = "Gender is required";
+      if (!formData.village.trim()) newErrors.village = "Village is required";
     }
 
-    if (formData.role === 'doctor') {
-      if (!formData.specialization) newErrors.specialization = 'Specialization is required';
+    if (formData.role === "doctor") {
+      if (!formData.specialization)
+        newErrors.specialization = "Specialization is required";
       if (!formData.yearsOfExperience) {
-        newErrors.yearsOfExperience = 'Years of experience is required';
+        newErrors.yearsOfExperience = "Years of experience is required";
       }
       if (isNaN(formData.yearsOfExperience) || formData.yearsOfExperience < 0) {
-        newErrors.yearsOfExperience = 'Please enter a valid number';
+        newErrors.yearsOfExperience = "Please enter a valid number";
       }
     }
 
@@ -85,7 +88,7 @@ const RegisterPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSuccessMessage('');
+    setSuccessMessage("");
 
     if (!validateForm()) return;
 
@@ -100,21 +103,21 @@ const RegisterPage = () => {
         role: formData.role,
       };
 
-      if (formData.role === 'patient') {
+      if (formData.role === "patient") {
         payload.age = parseInt(formData.age);
         payload.gender = formData.gender;
         payload.village = formData.village;
       }
 
-      if (formData.role === 'doctor') {
+      if (formData.role === "doctor") {
         payload.specialization = formData.specialization;
         payload.yearsOfExperience = parseInt(formData.yearsOfExperience);
       }
 
-      const response = await fetch('http://localhost:5000/api/auth/register', {
-        method: 'POST',
+      const response = await fetch("http://localhost:5000/api/auth/register", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(payload),
       });
@@ -122,18 +125,31 @@ const RegisterPage = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        setErrors({ submit: data.message || 'Registration failed. Please try again.' });
+        setErrors({
+          submit: data.message || "Registration failed. Please try again.",
+        });
         setLoading(false);
         return;
       }
 
-      setSuccessMessage('Registration successful! Redirecting to login...');
+      // Auto-login after successful registration
+      login(data.user, data.token);
+      setSuccessMessage("Registration successful! Redirecting to dashboard...");
+
+      // Redirect based on role
+      const dashboardRoute = {
+        patient: "/patient",
+        doctor: "/doctor",
+        admin: "/admin",
+      };
+
       setTimeout(() => {
-        navigate('/login');
-      }, 2000);
+        navigate(dashboardRoute[data.user.role] || "/");
+      }, 1000);
     } catch (err) {
       setErrors({
-        submit: 'An error occurred. Please check your connection and try again.',
+        submit:
+          "An error occurred. Please check your connection and try again.",
       });
     } finally {
       setLoading(false);
@@ -167,7 +183,10 @@ const RegisterPage = () => {
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Full Name */}
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="name"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Full Name
             </label>
             <input
@@ -178,16 +197,21 @@ const RegisterPage = () => {
               onChange={handleChange}
               placeholder="Enter your full name"
               className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
-                errors.name ? 'border-red-500' : 'border-gray-300'
+                errors.name ? "border-red-500" : "border-gray-300"
               }`}
               disabled={loading}
             />
-            {errors.name && <p className="text-red-600 text-xs mt-1">{errors.name}</p>}
+            {errors.name && (
+              <p className="text-red-600 text-xs mt-1">{errors.name}</p>
+            )}
           </div>
 
           {/* Email */}
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Email
             </label>
             <input
@@ -198,16 +222,21 @@ const RegisterPage = () => {
               onChange={handleChange}
               placeholder="Enter your email"
               className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
-                errors.email ? 'border-red-500' : 'border-gray-300'
+                errors.email ? "border-red-500" : "border-gray-300"
               }`}
               disabled={loading}
             />
-            {errors.email && <p className="text-red-600 text-xs mt-1">{errors.email}</p>}
+            {errors.email && (
+              <p className="text-red-600 text-xs mt-1">{errors.email}</p>
+            )}
           </div>
 
           {/* Phone */}
           <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="phone"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Phone Number
             </label>
             <input
@@ -218,16 +247,21 @@ const RegisterPage = () => {
               onChange={handleChange}
               placeholder="Enter 10-digit phone number"
               className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
-                errors.phone ? 'border-red-500' : 'border-gray-300'
+                errors.phone ? "border-red-500" : "border-gray-300"
               }`}
               disabled={loading}
             />
-            {errors.phone && <p className="text-red-600 text-xs mt-1">{errors.phone}</p>}
+            {errors.phone && (
+              <p className="text-red-600 text-xs mt-1">{errors.phone}</p>
+            )}
           </div>
 
           {/* Role Selection */}
           <div>
-            <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="role"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               I am a
             </label>
             <select
@@ -244,12 +278,15 @@ const RegisterPage = () => {
           </div>
 
           {/* Conditional Patient Fields */}
-          {formData.role === 'patient' && (
+          {formData.role === "patient" && (
             <>
               {/* Age */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="age" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label
+                    htmlFor="age"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
                     Age
                   </label>
                   <input
@@ -260,16 +297,21 @@ const RegisterPage = () => {
                     onChange={handleChange}
                     placeholder="e.g., 25"
                     className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
-                      errors.age ? 'border-red-500' : 'border-gray-300'
+                      errors.age ? "border-red-500" : "border-gray-300"
                     }`}
                     disabled={loading}
                   />
-                  {errors.age && <p className="text-red-600 text-xs mt-1">{errors.age}</p>}
+                  {errors.age && (
+                    <p className="text-red-600 text-xs mt-1">{errors.age}</p>
+                  )}
                 </div>
 
                 {/* Gender */}
                 <div>
-                  <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label
+                    htmlFor="gender"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
                     Gender
                   </label>
                   <select
@@ -278,7 +320,7 @@ const RegisterPage = () => {
                     value={formData.gender}
                     onChange={handleChange}
                     className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
-                      errors.gender ? 'border-red-500' : 'border-gray-300'
+                      errors.gender ? "border-red-500" : "border-gray-300"
                     }`}
                     disabled={loading}
                   >
@@ -287,13 +329,18 @@ const RegisterPage = () => {
                     <option value="female">Female</option>
                     <option value="other">Other</option>
                   </select>
-                  {errors.gender && <p className="text-red-600 text-xs mt-1">{errors.gender}</p>}
+                  {errors.gender && (
+                    <p className="text-red-600 text-xs mt-1">{errors.gender}</p>
+                  )}
                 </div>
               </div>
 
               {/* Village */}
               <div>
-                <label htmlFor="village" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="village"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Village
                 </label>
                 <input
@@ -304,21 +351,26 @@ const RegisterPage = () => {
                   onChange={handleChange}
                   placeholder="Enter your village name"
                   className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
-                    errors.village ? 'border-red-500' : 'border-gray-300'
+                    errors.village ? "border-red-500" : "border-gray-300"
                   }`}
                   disabled={loading}
                 />
-                {errors.village && <p className="text-red-600 text-xs mt-1">{errors.village}</p>}
+                {errors.village && (
+                  <p className="text-red-600 text-xs mt-1">{errors.village}</p>
+                )}
               </div>
             </>
           )}
 
           {/* Conditional Doctor Fields */}
-          {formData.role === 'doctor' && (
+          {formData.role === "doctor" && (
             <>
               {/* Specialization */}
               <div>
-                <label htmlFor="specialization" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="specialization"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Specialization
                 </label>
                 <select
@@ -327,12 +379,14 @@ const RegisterPage = () => {
                   value={formData.specialization}
                   onChange={handleChange}
                   className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
-                    errors.specialization ? 'border-red-500' : 'border-gray-300'
+                    errors.specialization ? "border-red-500" : "border-gray-300"
                   }`}
                   disabled={loading}
                 >
                   <option value="">Select Specialization</option>
-                  <option value="General Practitioner">General Practitioner</option>
+                  <option value="General Practitioner">
+                    General Practitioner
+                  </option>
                   <option value="Cardiology">Cardiology</option>
                   <option value="Dermatology">Dermatology</option>
                   <option value="Orthopedics">Orthopedics</option>
@@ -340,7 +394,9 @@ const RegisterPage = () => {
                   <option value="Pediatrics">Pediatrics</option>
                 </select>
                 {errors.specialization && (
-                  <p className="text-red-600 text-xs mt-1">{errors.specialization}</p>
+                  <p className="text-red-600 text-xs mt-1">
+                    {errors.specialization}
+                  </p>
                 )}
               </div>
 
@@ -360,12 +416,16 @@ const RegisterPage = () => {
                   onChange={handleChange}
                   placeholder="e.g., 5"
                   className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
-                    errors.yearsOfExperience ? 'border-red-500' : 'border-gray-300'
+                    errors.yearsOfExperience
+                      ? "border-red-500"
+                      : "border-gray-300"
                   }`}
                   disabled={loading}
                 />
                 {errors.yearsOfExperience && (
-                  <p className="text-red-600 text-xs mt-1">{errors.yearsOfExperience}</p>
+                  <p className="text-red-600 text-xs mt-1">
+                    {errors.yearsOfExperience}
+                  </p>
                 )}
               </div>
             </>
@@ -373,7 +433,10 @@ const RegisterPage = () => {
 
           {/* Password */}
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Password
             </label>
             <input
@@ -384,16 +447,21 @@ const RegisterPage = () => {
               onChange={handleChange}
               placeholder="At least 6 characters"
               className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
-                errors.password ? 'border-red-500' : 'border-gray-300'
+                errors.password ? "border-red-500" : "border-gray-300"
               }`}
               disabled={loading}
             />
-            {errors.password && <p className="text-red-600 text-xs mt-1">{errors.password}</p>}
+            {errors.password && (
+              <p className="text-red-600 text-xs mt-1">{errors.password}</p>
+            )}
           </div>
 
           {/* Confirm Password */}
           <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="confirmPassword"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Confirm Password
             </label>
             <input
@@ -404,12 +472,14 @@ const RegisterPage = () => {
               onChange={handleChange}
               placeholder="Re-enter your password"
               className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
-                errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
+                errors.confirmPassword ? "border-red-500" : "border-gray-300"
               }`}
               disabled={loading}
             />
             {errors.confirmPassword && (
-              <p className="text-red-600 text-xs mt-1">{errors.confirmPassword}</p>
+              <p className="text-red-600 text-xs mt-1">
+                {errors.confirmPassword}
+              </p>
             )}
           </div>
 
@@ -419,15 +489,18 @@ const RegisterPage = () => {
             disabled={loading}
             className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
           >
-            {loading ? 'Creating Account...' : 'Register'}
+            {loading ? "Creating Account..." : "Register"}
           </button>
         </form>
 
         {/* Login Link */}
         <div className="mt-6 text-center">
           <p className="text-gray-600 text-sm">
-            Already have an account?{' '}
-            <a href="/login" className="text-blue-600 hover:text-blue-700 font-semibold">
+            Already have an account?{" "}
+            <a
+              href="/login"
+              className="text-blue-600 hover:text-blue-700 font-semibold"
+            >
               Sign in
             </a>
           </p>

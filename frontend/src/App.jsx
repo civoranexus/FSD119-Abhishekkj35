@@ -1,40 +1,200 @@
-import React from "react";
+import React, { useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
 import "./App.css";
 
+// Components
+import Navbar from "./components/Navbar";
+import Sidebar from "./components/Sidebar";
+import NotificationBanner from "./components/NotificationBanner";
+import ProtectedRoute from "./components/ProtectedRoute";
+
 // Pages - Auth
-// import LoginPage from './pages/auth/LoginPage';
-// import RegisterPage from './pages/auth/RegisterPage';
+import LoginPage from "./pages/auth/LoginPage";
+import RegisterPage from "./pages/auth/RegisterPage";
 
 // Pages - Patient
-// import PatientDashboard from './pages/patient/PatientDashboard';
+import PatientDashboard from "./pages/patient/PatientDashboard";
+import BookAppointment from "./pages/patient/BookAppointment";
+import MyAppointments from "./pages/patient/MyAppointments";
+import MyHealthRecords from "./pages/patient/MyHealthRecords";
 
 // Pages - Doctor
-// import DoctorDashboard from './pages/doctor/DoctorDashboard';
+import DoctorDashboard from "./pages/doctor/DoctorDashboard";
+import Availability from "./pages/doctor/Availability";
+import DoctorAppointments from "./pages/doctor/DoctorAppointments";
+
+// Pages - Shared
+import ConsultationRoom from "./pages/ConsultationRoom";
+import CreateEHR from "./pages/CreateEHR";
+import Prescription from "./pages/Prescription";
 
 // Pages - Admin
-// import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import Reports from "./pages/admin/Reports";
+
+function AppContent() {
+  const [notifications, setNotifications] = useState([]);
+
+  const addNotification = (notification) => {
+    const id = Date.now();
+    setNotifications((prev) => [...prev, { ...notification, id }]);
+  };
+
+  return (
+    <div className="flex h-screen bg-gray-50">
+      {/* Sidebar */}
+      <Sidebar />
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Navbar */}
+        <Navbar />
+
+        {/* Notifications */}
+        <NotificationBanner
+          notifications={notifications}
+          onDismiss={(id) =>
+            setNotifications((prev) => prev.filter((n) => n.id !== id))
+          }
+        />
+
+        {/* Scrollable Page Content */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-6 max-w-7xl mx-auto">
+            <Routes>
+              {/* Auth Routes */}
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+
+              {/* Patient Routes */}
+              <Route
+                path="/patient"
+                element={
+                  <ProtectedRoute requiredRole="patient">
+                    <PatientDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/patient/book-appointment"
+                element={
+                  <ProtectedRoute requiredRole="patient">
+                    <BookAppointment />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/patient/my-appointments"
+                element={
+                  <ProtectedRoute requiredRole="patient">
+                    <MyAppointments />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/patient/my-records"
+                element={
+                  <ProtectedRoute requiredRole="patient">
+                    <MyHealthRecords />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/patient/prescriptions"
+                element={
+                  <ProtectedRoute requiredRole="patient">
+                    <MyAppointments />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Doctor Routes */}
+              <Route
+                path="/doctor"
+                element={
+                  <ProtectedRoute requiredRole="doctor">
+                    <DoctorDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/doctor/appointments"
+                element={
+                  <ProtectedRoute requiredRole="doctor">
+                    <DoctorAppointments />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/doctor/availability"
+                element={
+                  <ProtectedRoute requiredRole="doctor">
+                    <Availability />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/doctor/create-ehr"
+                element={
+                  <ProtectedRoute requiredRole="doctor">
+                    <CreateEHR />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Shared Routes */}
+              <Route
+                path="/consultation/:appointmentId"
+                element={
+                  <ProtectedRoute>
+                    <ConsultationRoom />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/prescription"
+                element={
+                  <ProtectedRoute requiredRole="doctor">
+                    <Prescription />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Admin Routes */}
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/reports"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <Reports />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Default Route */}
+              <Route path="/" element={<Navigate to="/login" />} />
+            </Routes>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        {/* Auth Routes */}
-        {/* <Route path="/login" element={<LoginPage />} /> */}
-        {/* <Route path="/register" element={<RegisterPage />} /> */}
-
-        {/* Patient Routes */}
-        {/* <Route path="/patient/*" element={<PatientDashboard />} /> */}
-
-        {/* Doctor Routes */}
-        {/* <Route path="/doctor/*" element={<DoctorDashboard />} /> */}
-
-        {/* Admin Routes */}
-        {/* <Route path="/admin/*" element={<AdminDashboard />} /> */}
-
-        {/* Default Route */}
-        <Route path="/" element={<Navigate to="/login" />} />
-      </Routes>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
     </BrowserRouter>
   );
 }

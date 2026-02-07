@@ -183,6 +183,16 @@ exports.getAppointments = async (req, res) => {
   }
 };
 
+// Get all available doctors with specialization
+exports.getAvailableDoctors = async (req, res) => {
+  try {
+    const doctors = await User.find({ role: 'doctor' }).select('name specialization yearsOfExperience availabilitySlots -password');
+    res.json(doctors);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
 // Optional: admin can change any appointment status
 exports.adminUpdateStatus = async (req, res) => {
   try {

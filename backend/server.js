@@ -18,7 +18,7 @@ app.use(cors());
 app.use(express.json());
 
 // MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/mern-app')
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/healthvillage')
   .then(() => console.log('MongoDB connected'))
   .catch((err) => console.log('MongoDB connection error:', err));
 

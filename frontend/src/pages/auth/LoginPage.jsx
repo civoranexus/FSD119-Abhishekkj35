@@ -1,23 +1,25 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from "../../context/AuthContext";
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const { login } = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
-        method: 'POST',
+      const response = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           email,
@@ -28,26 +30,36 @@ const LoginPage = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.message || 'Login failed. Please try again.');
+        setError(data.message || "Login failed. Please try again.");
         setLoading(false);
         return;
       }
 
-      // Store JWT and role in localStorage
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('role', data.user.role);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      if (!data.user || !data.token) {
+        setError("Invalid response from server. Please try again.");
+        setLoading(false);
+        return;
+      }
+
+      // Update AuthContext with user data and token
+      login(data.user, data.token);
 
       // Redirect based on role
       const dashboardRoute = {
-        patient: '/patient',
-        doctor: '/doctor',
-        admin: '/admin',
+        patient: "/patient",
+        doctor: "/doctor",
+        admin: "/admin",
       };
 
-      navigate(dashboardRoute[data.user.role] || '/');
+      const route = dashboardRoute[data.user.role] || "/patient";
+      // Use setTimeout to ensure state updates propagate
+      setTimeout(() => {
+        navigate(route, { replace: true });
+      }, 50);
     } catch (err) {
-      setError('An error occurred. Please check your connection and try again.');
+      setError(
+        "An error occurred. Please check your connection and try again.",
+      );
     } finally {
       setLoading(false);
     }
@@ -73,7 +85,10 @@ const LoginPage = () => {
         <form onSubmit={handleLogin} className="space-y-6">
           {/* Email/Phone Field */}
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Email or Phone Number
             </label>
             <input
@@ -90,7 +105,10 @@ const LoginPage = () => {
 
           {/* Password Field */}
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Password
             </label>
             <input
@@ -126,15 +144,18 @@ const LoginPage = () => {
             disabled={loading}
             className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
 
         {/* Register Link */}
         <div className="mt-6 text-center">
           <p className="text-gray-600 text-sm">
-            Don't have an account?{' '}
-            <a href="/register" className="text-blue-600 hover:text-blue-700 font-semibold">
+            Don't have an account?{" "}
+            <a
+              href="/register"
+              className="text-blue-600 hover:text-blue-700 font-semibold"
+            >
               Create one
             </a>
           </p>
@@ -142,11 +163,19 @@ const LoginPage = () => {
 
         {/* Demo Credentials Info */}
         <div className="mt-6 pt-6 border-t border-gray-200">
-          <p className="text-xs text-gray-500 text-center mb-3">Demo Credentials</p>
+          <p className="text-xs text-gray-500 text-center mb-3">
+            Demo Credentials
+          </p>
           <div className="text-xs text-gray-600 space-y-1">
-            <p><strong>Patient:</strong> patient@demo.com / password123</p>
-            <p><strong>Doctor:</strong> doctor@demo.com / password123</p>
-            <p><strong>Admin:</strong> admin@demo.com / password123</p>
+            <p>
+              <strong>Patient:</strong> patient@demo.com / password123
+            </p>
+            <p>
+              <strong>Doctor:</strong> doctor@demo.com / password123
+            </p>
+            <p>
+              <strong>Admin:</strong> admin@demo.com / password123
+            </p>
           </div>
         </div>
       </div>
