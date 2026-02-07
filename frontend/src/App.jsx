@@ -70,139 +70,167 @@ function ProtectedLayout({ children }) {
 }
 
 function AppContent() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
 
-  // Show auth pages without layout
-  if (!isAuthenticated) {
+  // Show loading while checking auth
+  if (loading) {
     return (
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="*" element={<Navigate to="/login" />} />
-      </Routes>
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-200 border-b-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
     );
   }
 
-  // Show authenticated pages with layout
   return (
-    <ProtectedLayout>
-      <Routes>
-        {/* Patient Routes */}
-        <Route
-          path="/patient"
-          element={
-            <ProtectedRoute requiredRole="patient">
+    <Routes>
+      {/* Auth Routes - No Layout */}
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+
+      {/* Protected Routes - With Layout */}
+      <Route
+        path="/patient"
+        element={
+          <ProtectedRoute requiredRole="patient">
+            <ProtectedLayout>
               <PatientDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/patient/book-appointment"
-          element={
-            <ProtectedRoute requiredRole="patient">
+            </ProtectedLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/book-appointment"
+        element={
+          <ProtectedRoute requiredRole="patient">
+            <ProtectedLayout>
               <BookAppointment />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/patient/my-appointments"
-          element={
-            <ProtectedRoute requiredRole="patient">
+            </ProtectedLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/my-appointments"
+        element={
+          <ProtectedRoute requiredRole="patient">
+            <ProtectedLayout>
               <MyAppointments />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/patient/my-records"
-          element={
-            <ProtectedRoute requiredRole="patient">
+            </ProtectedLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/my-records"
+        element={
+          <ProtectedRoute requiredRole="patient">
+            <ProtectedLayout>
               <MyHealthRecords />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/patient/prescriptions"
-          element={
-            <ProtectedRoute requiredRole="patient">
+            </ProtectedLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/prescriptions"
+        element={
+          <ProtectedRoute requiredRole="patient">
+            <ProtectedLayout>
               <MyAppointments />
-            </ProtectedRoute>
-          }
-        />
+            </ProtectedLayout>
+          </ProtectedRoute>
+        }
+      />
 
-        {/* Doctor Routes */}
-        <Route
-          path="/doctor"
-          element={
-            <ProtectedRoute requiredRole="doctor">
+      {/* Doctor Routes */}
+      <Route
+        path="/doctor"
+        element={
+          <ProtectedRoute requiredRole="doctor">
+            <ProtectedLayout>
               <DoctorDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/doctor/appointments"
-          element={
-            <ProtectedRoute requiredRole="doctor">
+            </ProtectedLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/doctor/appointments"
+        element={
+          <ProtectedRoute requiredRole="doctor">
+            <ProtectedLayout>
               <DoctorAppointments />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/doctor/availability"
-          element={
-            <ProtectedRoute requiredRole="doctor">
+            </ProtectedLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/doctor/availability"
+        element={
+          <ProtectedRoute requiredRole="doctor">
+            <ProtectedLayout>
               <Availability />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/doctor/create-ehr"
-          element={
-            <ProtectedRoute requiredRole="doctor">
+            </ProtectedLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/doctor/create-ehr"
+        element={
+          <ProtectedRoute requiredRole="doctor">
+            <ProtectedLayout>
               <CreateEHR />
-            </ProtectedRoute>
-          }
-        />
+            </ProtectedLayout>
+          </ProtectedRoute>
+        }
+      />
 
-        {/* Shared Routes */}
-        <Route
-          path="/consultation/:appointmentId"
-          element={
-            <ProtectedRoute>
+      {/* Shared Routes */}
+      <Route
+        path="/consultation/:appointmentId"
+        element={
+          <ProtectedRoute>
+            <ProtectedLayout>
               <ConsultationRoom />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/prescription"
-          element={
-            <ProtectedRoute requiredRole="doctor">
+            </ProtectedLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/prescription"
+        element={
+          <ProtectedRoute requiredRole="doctor">
+            <ProtectedLayout>
               <Prescription />
-            </ProtectedRoute>
-          }
-        />
+            </ProtectedLayout>
+          </ProtectedRoute>
+        }
+      />
 
-        {/* Admin Routes */}
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute requiredRole="admin">
+      {/* Admin Routes */}
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute requiredRole="admin">
+            <ProtectedLayout>
               <AdminDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/reports"
-          element={
-            <ProtectedRoute requiredRole="admin">
+            </ProtectedLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/reports"
+        element={
+          <ProtectedRoute requiredRole="admin">
+            <ProtectedLayout>
               <Reports />
-            </ProtectedRoute>
-          }
-        />
+            </ProtectedLayout>
+          </ProtectedRoute>
+        }
+      />
 
-        {/* Default Route */}
-        <Route path="/" element={<Navigate to="/patient" />} />
-      </Routes>
-    </ProtectedLayout>
+      {/* Catch-all - redirect to login */}
+      <Route path="*" element={isAuthenticated ? <Navigate to="/patient" /> : <Navigate to="/login" />} />
+    </Routes>
   );
 }
 
