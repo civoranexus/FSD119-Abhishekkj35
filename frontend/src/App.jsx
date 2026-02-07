@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
+import { useAuth } from "./context/AuthContext";
 import "./App.css";
 
 // Components
@@ -33,7 +34,7 @@ import Prescription from "./pages/Prescription";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import Reports from "./pages/admin/Reports";
 
-function AppContent() {
+function ProtectedLayout({ children }) {
   const [notifications, setNotifications] = useState([]);
 
   const addNotification = (notification) => {
@@ -61,131 +62,147 @@ function AppContent() {
 
         {/* Scrollable Page Content */}
         <div className="flex-1 overflow-y-auto">
-          <div className="p-6 max-w-7xl mx-auto">
-            <Routes>
-              {/* Auth Routes */}
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
-
-              {/* Patient Routes */}
-              <Route
-                path="/patient"
-                element={
-                  <ProtectedRoute requiredRole="patient">
-                    <PatientDashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/patient/book-appointment"
-                element={
-                  <ProtectedRoute requiredRole="patient">
-                    <BookAppointment />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/patient/my-appointments"
-                element={
-                  <ProtectedRoute requiredRole="patient">
-                    <MyAppointments />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/patient/my-records"
-                element={
-                  <ProtectedRoute requiredRole="patient">
-                    <MyHealthRecords />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/patient/prescriptions"
-                element={
-                  <ProtectedRoute requiredRole="patient">
-                    <MyAppointments />
-                  </ProtectedRoute>
-                }
-              />
-
-              {/* Doctor Routes */}
-              <Route
-                path="/doctor"
-                element={
-                  <ProtectedRoute requiredRole="doctor">
-                    <DoctorDashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/doctor/appointments"
-                element={
-                  <ProtectedRoute requiredRole="doctor">
-                    <DoctorAppointments />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/doctor/availability"
-                element={
-                  <ProtectedRoute requiredRole="doctor">
-                    <Availability />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/doctor/create-ehr"
-                element={
-                  <ProtectedRoute requiredRole="doctor">
-                    <CreateEHR />
-                  </ProtectedRoute>
-                }
-              />
-
-              {/* Shared Routes */}
-              <Route
-                path="/consultation/:appointmentId"
-                element={
-                  <ProtectedRoute>
-                    <ConsultationRoom />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/prescription"
-                element={
-                  <ProtectedRoute requiredRole="doctor">
-                    <Prescription />
-                  </ProtectedRoute>
-                }
-              />
-
-              {/* Admin Routes */}
-              <Route
-                path="/admin"
-                element={
-                  <ProtectedRoute requiredRole="admin">
-                    <AdminDashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/reports"
-                element={
-                  <ProtectedRoute requiredRole="admin">
-                    <Reports />
-                  </ProtectedRoute>
-                }
-              />
-
-              {/* Default Route */}
-              <Route path="/" element={<Navigate to="/login" />} />
-            </Routes>
-          </div>
+          <div className="p-6 max-w-7xl mx-auto">{children}</div>
         </div>
       </div>
     </div>
+  );
+}
+
+function AppContent() {
+  const { isAuthenticated } = useAuth();
+
+  // Show auth pages without layout
+  if (!isAuthenticated) {
+    return (
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="*" element={<Navigate to="/login" />} />
+      </Routes>
+    );
+  }
+
+  // Show authenticated pages with layout
+  return (
+    <ProtectedLayout>
+      <Routes>
+        {/* Patient Routes */}
+        <Route
+          path="/patient"
+          element={
+            <ProtectedRoute requiredRole="patient">
+              <PatientDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/patient/book-appointment"
+          element={
+            <ProtectedRoute requiredRole="patient">
+              <BookAppointment />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/patient/my-appointments"
+          element={
+            <ProtectedRoute requiredRole="patient">
+              <MyAppointments />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/patient/my-records"
+          element={
+            <ProtectedRoute requiredRole="patient">
+              <MyHealthRecords />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/patient/prescriptions"
+          element={
+            <ProtectedRoute requiredRole="patient">
+              <MyAppointments />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Doctor Routes */}
+        <Route
+          path="/doctor"
+          element={
+            <ProtectedRoute requiredRole="doctor">
+              <DoctorDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/doctor/appointments"
+          element={
+            <ProtectedRoute requiredRole="doctor">
+              <DoctorAppointments />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/doctor/availability"
+          element={
+            <ProtectedRoute requiredRole="doctor">
+              <Availability />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/doctor/create-ehr"
+          element={
+            <ProtectedRoute requiredRole="doctor">
+              <CreateEHR />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Shared Routes */}
+        <Route
+          path="/consultation/:appointmentId"
+          element={
+            <ProtectedRoute>
+              <ConsultationRoom />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/prescription"
+          element={
+            <ProtectedRoute requiredRole="doctor">
+              <Prescription />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Admin Routes */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/reports"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <Reports />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Default Route */}
+        <Route path="/" element={<Navigate to="/patient" />} />
+      </Routes>
+    </ProtectedLayout>
   );
 }
 
