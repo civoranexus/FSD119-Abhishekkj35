@@ -1,0 +1,12 @@
+services:
+  - type: static
+    name: healthvillage-frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://fsd119-abhishekkj35.onrender.com/api
+      - key: VITE_APP_NAME
+        value: HealthVillage
+      - key: VITE_DEFAULT_TIMEOUT
+        value: "10000"
