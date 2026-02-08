@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from "../../context/AuthContext";
 import { authService } from "../../services/api";
 
@@ -485,13 +485,10 @@ const RegisterPage = () => {
         {/* Login Link */}
         <div className="mt-6 text-center">
           <p className="text-gray-600 text-sm">
-            Already have an account?{" "}
-            <a
-              href="/login"
-              className="text-blue-600 hover:text-blue-700 font-semibold"
-            >
+            Already have an account? {" "}
+            <Link to="/login" className="text-blue-600 hover:text-blue-700 font-semibold">
               Sign in
-            </a>
+            </Link>
           </p>
         </div>
       </div>
