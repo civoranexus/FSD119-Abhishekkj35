@@ -14,9 +14,12 @@ const MyHealthRecords = () => {
   const fetchRecords = async () => {
     try {
       const response = await ehrService.getMyEHRs();
-      setRecords(response.data);
+      console.log('Health records response:', response.data);
+      const recordsData = response.data.ehrs || response.data || [];
+      setRecords(Array.isArray(recordsData) ? recordsData : []);
     } catch (err) {
-      setError('Failed to load health records');
+      console.error('Health records error:', err);
+      setError(err.response?.data?.message || 'Failed to load health records');
     } finally {
       setLoading(false);
     }
@@ -38,15 +41,17 @@ const MyHealthRecords = () => {
         <p className="text-gray-600">No health records available yet.</p>
       ) : (
         <div className="space-y-4">
-          {records.map((record) => (
+          {records.map((record) => {
+            const doctorName = typeof record.doctorId === 'string' ? 'Doctor' : record.doctorId?.name || 'Unknown Doctor';
+            return (
             <div key={record._id} className="border rounded-lg p-4 hover:shadow-lg transition">
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-800">
-                    Consultation with Dr. {record.doctorId?.name}
+                    Consultation with Dr. {doctorName}
                   </h3>
                   <p className="text-sm text-gray-600">
-                    {new Date(record.consultationDate).toLocaleDateString()}
+                    {record.consultationDate ? new Date(record.consultationDate).toLocaleDateString() : 'Date not available'}
                   </p>
                 </div>
                 <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold">
@@ -110,7 +115,8 @@ const MyHealthRecords = () => {
                 </div>
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

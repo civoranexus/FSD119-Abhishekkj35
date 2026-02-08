@@ -42,22 +42,124 @@ async function initializeDemo() {
     },
     {
       _id: 'demo-user-2',
-      name: 'Demo Doctor',
-      email: 'doctor@demo.com',
+      name: 'Dr. Rajesh Kumar',
+      email: 'doctor1@demo.com',
       phone: '9000000002',
       password: await bcrypt.hash('password123', 10),
       role: 'doctor',
       specialization: 'General Practitioner',
-      yearsOfExperience: 5,
-      availabilitySlots: [{ day: 'Monday', startTime: '09:00', endTime: '17:00', isAvailable: true }],
+      yearsOfExperience: 8,
+      availabilitySlots: [
+        { day: 'Monday', startTime: '09:00', endTime: '17:00', isAvailable: true },
+        { day: 'Tuesday', startTime: '09:00', endTime: '17:00', isAvailable: true },
+        { day: 'Wednesday', startTime: '10:00', endTime: '18:00', isAvailable: true },
+        { day: 'Thursday', startTime: '09:00', endTime: '17:00', isAvailable: true },
+        { day: 'Friday', startTime: '09:00', endTime: '17:00', isAvailable: true },
+      ],
       createdAt: new Date(),
       updatedAt: new Date(),
     },
     {
       _id: 'demo-user-3',
+      name: 'Dr. Priya Sharma',
+      email: 'doctor2@demo.com',
+      phone: '9000000003',
+      password: await bcrypt.hash('password123', 10),
+      role: 'doctor',
+      specialization: 'Cardiologist',
+      yearsOfExperience: 12,
+      availabilitySlots: [
+        { day: 'Monday', startTime: '10:00', endTime: '18:00', isAvailable: true },
+        { day: 'Tuesday', startTime: '14:00', endTime: '20:00', isAvailable: true },
+        { day: 'Wednesday', startTime: '09:00', endTime: '17:00', isAvailable: true },
+        { day: 'Thursday', startTime: '10:00', endTime: '18:00', isAvailable: true },
+        { day: 'Saturday', startTime: '09:00', endTime: '13:00', isAvailable: true },
+      ],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      _id: 'demo-user-4',
+      name: 'Dr. Amit Patel',
+      email: 'doctor3@demo.com',
+      phone: '9000000004',
+      password: await bcrypt.hash('password123', 10),
+      role: 'doctor',
+      specialization: 'Pediatrician',
+      yearsOfExperience: 6,
+      availabilitySlots: [
+        { day: 'Monday', startTime: '09:00', endTime: '13:00', isAvailable: true },
+        { day: 'Tuesday', startTime: '14:00', endTime: '18:00', isAvailable: true },
+        { day: 'Wednesday', startTime: '09:00', endTime: '17:00', isAvailable: true },
+        { day: 'Thursday', startTime: '10:00', endTime: '14:00', isAvailable: true },
+        { day: 'Friday', startTime: '15:00', endTime: '19:00', isAvailable: true },
+        { day: 'Saturday', startTime: '10:00', endTime: '14:00', isAvailable: true },
+      ],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      _id: 'demo-user-5',
+      name: 'Dr. Sneha Desai',
+      email: 'doctor4@demo.com',
+      phone: '9000000005',
+      password: await bcrypt.hash('password123', 10),
+      role: 'doctor',
+      specialization: 'Dermatologist',
+      yearsOfExperience: 9,
+      availabilitySlots: [
+        { day: 'Monday', startTime: '11:00', endTime: '19:00', isAvailable: true },
+        { day: 'Wednesday', startTime: '09:00', endTime: '17:00', isAvailable: true },
+        { day: 'Friday', startTime: '10:00', endTime: '18:00', isAvailable: true },
+        { day: 'Saturday', startTime: '09:00', endTime: '15:00', isAvailable: true },
+        { day: 'Sunday', startTime: '10:00', endTime: '14:00', isAvailable: true },
+      ],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      _id: 'demo-user-6',
+      name: 'Dr. Vikram Singh',
+      email: 'doctor5@demo.com',
+      phone: '9000000006',
+      password: await bcrypt.hash('password123', 10),
+      role: 'doctor',
+      specialization: 'Orthopedic Surgeon',
+      yearsOfExperience: 15,
+      availabilitySlots: [
+        { day: 'Tuesday', startTime: '09:00', endTime: '17:00', isAvailable: true },
+        { day: 'Wednesday', startTime: '10:00', endTime: '18:00', isAvailable: true },
+        { day: 'Thursday', startTime: '09:00', endTime: '17:00', isAvailable: true },
+        { day: 'Friday', startTime: '11:00', endTime: '19:00', isAvailable: true },
+        { day: 'Saturday', startTime: '10:00', endTime: '16:00', isAvailable: true },
+      ],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      _id: 'demo-user-7',
+      name: 'Dr. Anjali Verma',
+      email: 'doctor6@demo.com',
+      phone: '9000000007',
+      password: await bcrypt.hash('password123', 10),
+      role: 'doctor',
+      specialization: 'Psychiatrist',
+      yearsOfExperience: 10,
+      availabilitySlots: [
+        { day: 'Monday', startTime: '09:00', endTime: '17:00', isAvailable: true },
+        { day: 'Tuesday', startTime: '10:00', endTime: '18:00', isAvailable: true },
+        { day: 'Thursday', startTime: '14:00', endTime: '20:00', isAvailable: true },
+        { day: 'Friday', startTime: '09:00', endTime: '17:00', isAvailable: true },
+        { day: 'Sunday', startTime: '11:00', endTime: '15:00', isAvailable: true },
+      ],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      _id: 'demo-user-8',
       name: 'Demo Admin',
       email: 'admin@demo.com',
-      phone: '9000000003',
+      phone: '9000000008',
       password: await bcrypt.hash('password123', 10),
       role: 'admin',
       createdAt: new Date(),
@@ -66,19 +168,24 @@ async function initializeDemo() {
   ];
 
   db.users = users;
-  db.nextIds.user = 4;
+  db.nextIds.user = 9;
 
-  // Add demo appointments
+  // Add demo appointments with multiple doctors
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
-  const appointmentDate = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate());
+  
+  const day2 = new Date();
+  day2.setDate(day2.getDate() + 2);
+  
+  const day3 = new Date();
+  day3.setDate(day3.getDate() + 3);
 
   db.appointments = [
     {
       _id: 'apt-1',
       patientId: 'demo-user-1',
       doctorId: 'demo-user-2',
-      appointmentDate,
+      appointmentDate: tomorrow,
       timeSlot: '09:00 - 09:30',
       consultationType: 'audio',
       status: 'confirmed',
@@ -88,16 +195,50 @@ async function initializeDemo() {
     {
       _id: 'apt-2',
       patientId: 'demo-user-1',
-      doctorId: 'demo-user-2',
-      appointmentDate,
-      timeSlot: '10:00 - 10:30',
-      consultationType: 'audio',
+      doctorId: 'demo-user-3',
+      appointmentDate: day2,
+      timeSlot: '14:00 - 14:30',
+      consultationType: 'video',
       status: 'confirmed',
       createdAt: new Date(),
       updatedAt: new Date(),
     },
+    {
+      _id: 'apt-3',
+      patientId: 'demo-user-1',
+      doctorId: 'demo-user-4',
+      appointmentDate: day3,
+      timeSlot: '10:00 - 10:30',
+      consultationType: 'chat',
+      status: 'pending',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
   ];
-  db.nextIds.appointment = 3;
+  db.nextIds.appointment = 4;
+
+  // Add demo EHRs
+  db.ehrs = [
+    {
+      _id: 'ehr-1',
+      patientId: 'demo-user-1',
+      doctorId: 'demo-user-2',
+      consultationDate: new Date(),
+      symptoms: 'Fever and cough',
+      diagnosis: 'Viral infection',
+      treatmentPlan: 'Rest, hydration, antipyretics as needed',
+      prescriptions: ['Paracetamol 500mg - twice daily', 'Cough syrup - thrice daily'],
+      labTests: [],
+      notes: 'Patient advised home care and follow-up in 7 days. Avoid crowds.',
+      followUpDate: new Date(new Date().setDate(new Date().getDate() + 7)),
+      accessLog: [
+        { userId: 'demo-user-2', role: 'doctor', accessTime: new Date() }
+      ],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }
+  ];
+  db.nextIds.ehr = 2;
 
   console.log('In-memory store initialized with demo data');
 }

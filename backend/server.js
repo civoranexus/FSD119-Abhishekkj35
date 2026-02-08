@@ -6,6 +6,7 @@ const store = require('./db/memoryStore');
 
 const authRoutes = require('./routes/authRoutes');
 const appointmentRoutes = require('./routes/appointmentRoutes');
+const authMiddleware = require('./middleware/authMiddleware');
 // const consultationRoutes = require('./routes/consultationRoutes');
 // const ehrRoutes = require('./routes/ehrRoutes');
 // const prescriptionRoutes = require('./routes/prescriptionRoutes');
@@ -31,6 +32,33 @@ app.get('/', (req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/appointments', appointmentRoutes);
+
+// Minimal EHR endpoint (reads from in-memory store). This provides the frontend with patient EHRs while full controller
+// conversion is in progress. Returns { ehrs: [...] } for the authenticated user.
+app.get('/api/ehr', authMiddleware, (req, res) => {
+  try {
+    const userId = req.userId;
+    const ehrs = store.getEHRsByPatientId(userId) || [];
+    // For safety, remove any sensitive fields before returning
+    const safe = ehrs.map((e) => ({
+      _id: e._id,
+      patientId: e.patientId,
+      doctorId: e.doctorId,
+      consultationDate: e.consultationDate,
+      symptoms: e.symptoms,
+      diagnosis: e.diagnosis,
+      treatmentPlan: e.treatmentPlan,
+      prescriptions: e.prescriptions || [],
+      followUpDate: e.followUpDate || null,
+      notes: e.notes || null,
+      createdAt: e.createdAt,
+      updatedAt: e.updatedAt,
+    }));
+    return res.json({ ehrs: safe });
+  } catch (err) {
+    return res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
 // app.use('/api/consultations', consultationRoutes);
 // app.use('/api/ehr', ehrRoutes);
 // app.use('/api/prescriptions', prescriptionRoutes);

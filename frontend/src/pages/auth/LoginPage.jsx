@@ -18,18 +18,29 @@ const LoginPage = () => {
 
     try {
       const response = await authService.login(email, password);
+      console.log('Login response:', response.data);
       const data = response.data;
 
       if (!data.user || !data.token) {
-        setError("Invalid response from server. Please try again.");
+        const missingFields = [];
+        if (!data.user) missingFields.push('user');
+        if (!data.token) missingFields.push('token');
+        setError(`Invalid response: Missing ${missingFields.join(', ')}`);
+        console.error('Missing fields in login response:', missingFields);
         setLoading(false);
         return;
       }
 
       // Update AuthContext with user data and token
+      console.log('Calling login() with:', data.user, data.token);
       login(data.user, data.token);
+      
+      // Verify data was stored
+      console.log('After login - localStorage.token:', localStorage.getItem('token') ? 'exists' : 'missing');
+      console.log('After login - localStorage.user:', localStorage.getItem('user') ? 'exists' : 'missing');
+      console.log('Login successful, user:', data.user);
 
-      // Redirect based on role
+      // Redirect based on role after a brief delay
       const dashboardRoute = {
         patient: "/patient",
         doctor: "/doctor",
@@ -37,11 +48,15 @@ const LoginPage = () => {
       };
 
       const route = dashboardRoute[data.user.role] || "/patient";
-      // Use setTimeout to ensure state updates propagate
+      console.log('Navigating to:', route);
+      
+      // Use a longer delay to ensure state updates
       setTimeout(() => {
+        console.log('Executing navigation...');
         navigate(route, { replace: true });
-      }, 50);
+      }, 100);
     } catch (err) {
+      console.error('Login error:', err);
       const errorMessage =
         err.response?.data?.message ||
         err.message ||

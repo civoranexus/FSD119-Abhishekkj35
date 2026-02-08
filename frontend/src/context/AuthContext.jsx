@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import apiClient from '../services/api';
 
 const AuthContext = createContext();
 
@@ -17,6 +18,12 @@ export const AuthProvider = ({ children }) => {
       setToken(savedToken);
       setUser(JSON.parse(savedUser));
       setIsAuthenticated(true);
+      // ensure axios sends token immediately
+      try {
+        apiClient.defaults.headers.Authorization = `Bearer ${savedToken}`;
+      } catch (err) {
+        // ignore if apiClient not available
+      }
     }
     setLoading(false);
   }, []);
@@ -28,6 +35,11 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('token', authToken);
     localStorage.setItem('user', JSON.stringify(userData));
     localStorage.setItem('role', userData.role);
+    try {
+      apiClient.defaults.headers.Authorization = `Bearer ${authToken}`;
+    } catch (err) {
+      // ignore
+    }
   };
 
   const logout = () => {
@@ -37,6 +49,11 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('role');
+    try {
+      delete apiClient.defaults.headers.Authorization;
+    } catch (err) {
+      // ignore
+    }
   };
 
   return (

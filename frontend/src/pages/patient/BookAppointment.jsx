@@ -40,16 +40,41 @@ const BookAppointment = () => {
     }));
   };
 
+  // Check if selected doctor is available on chosen date
+  const isDoctorAvailableOnDate = (doctor, dateStr) => {
+    if (!doctor || !doctor.availabilitySlots || !dateStr) return false;
+    // Parse date string correctly to avoid timezone issues
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    const weekdayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const dayName = weekdayNames[date.getDay()];
+    console.log(`Checking availability for ${dateStr}: ${dayName}`, doctor.availabilitySlots);
+    const slot = doctor.availabilitySlots.find(s => s.day === dayName);
+    console.log(`Found slot for ${dayName}:`, slot);
+    return !!(slot && slot.isAvailable);
+  };
+
+  const selectedDoctor = doctors.find(d => d._id === formData.doctorId);
+  const doctorAvailable = isDoctorAvailableOnDate(selectedDoctor, formData.appointmentDate);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
-      await appointmentService.bookAppointment(formData);
-      navigate('/patient/my-appointments');
+      console.log('Booking appointment with data:', formData);
+      const response = await appointmentService.bookAppointment(formData);
+      console.log('Booking successful:', response.data);
+      
+      // Small delay to ensure state updates before navigation
+      setTimeout(() => {
+        navigate('/patient/my-appointments', { replace: true });
+      }, 500);
     } catch (err) {
-      setError(err.response?.data?.message || 'Booking failed');
+      console.error('Booking error:', err);
+      const errorMsg = err.response?.data?.message || err.message || 'Booking failed. Please try again.';
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -119,26 +144,37 @@ const BookAppointment = () => {
               <label className="flex text-lg font-bold text-gray-800 mb-3 items-center">
                 <span className="mr-2">⏰</span>Select Time Slot
               </label>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {['09:00 - 09:30', '09:30 - 10:00', '10:00 - 10:30', '14:00 - 14:30', '14:30 - 15:00', '15:00 - 15:30'].map((time) => (
-                  <label key={time} className={`p-3 border-2 rounded-lg cursor-pointer text-center font-medium transition ${
-                    formData.timeSlot === time 
-                      ? 'border-blue-600 bg-blue-50 text-blue-700' 
-                      : 'border-gray-200 hover:border-blue-300'
-                  }`}>
-                    <input
-                      type="radio"
-                      name="timeSlot"
-                      value={time}
-                      checked={formData.timeSlot === time}
-                      onChange={handleChange}
-                      className="hidden"
-                      required
-                    />
-                    {time}
-                  </label>
-                ))}
-              </div>
+              {!formData.doctorId ? (
+                <p className="text-sm text-gray-500 bg-gray-50 p-3 rounded-lg">⚠️ Please select a doctor first</p>
+              ) : !formData.appointmentDate ? (
+                <p className="text-sm text-gray-500 bg-gray-50 p-3 rounded-lg">⚠️ Please select a date first</p>
+              ) : !doctorAvailable ? (
+                <div className="bg-red-50 p-4 rounded-lg border-2 border-red-200">
+                  <p className="text-red-700 font-semibold">🔒 Doctor Not Available</p>
+                  <p className="text-sm text-red-600 mt-1">This doctor is not available on the selected date. Please choose a different date or doctor.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {['09:00 - 09:30', '09:30 - 10:00', '10:00 - 10:30', '14:00 - 14:30', '14:30 - 15:00', '15:00 - 15:30'].map((time) => (
+                    <label key={time} className={`p-3 border-2 rounded-lg text-center font-medium transition cursor-pointer ${
+                      formData.timeSlot === time 
+                        ? 'border-blue-600 bg-blue-50 text-blue-700' 
+                        : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50'
+                    }`}>
+                      <input
+                        type="radio"
+                        name="timeSlot"
+                        value={time}
+                        checked={formData.timeSlot === time}
+                        onChange={handleChange}
+                        className="hidden"
+                        required
+                      />
+                      {time}
+                    </label>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Consultation Type */}
@@ -192,10 +228,10 @@ const BookAppointment = () => {
             <div className="flex gap-4 pt-4">
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !doctorAvailable}
                 className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-700 text-white font-bold rounded-lg hover:shadow-lg hover:from-blue-600 hover:to-blue-800 transition disabled:opacity-50 disabled:cursor-not-allowed text-lg"
               >
-                {loading ? '⏳ Booking...' : '✅ Confirm Booking'}
+                {loading ? '⏳ Booking...' : (doctorAvailable ? '✅ Confirm Booking' : '⛔ Doctor Unavailable')}
               </button>
               <button
                 type="button"

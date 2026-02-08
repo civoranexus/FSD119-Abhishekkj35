@@ -34,10 +34,16 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
+      console.warn('401 Unauthorized - clearing auth data');
       localStorage.removeItem('token');
       localStorage.removeItem('role');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      
+      // Only redirect if NOT already on login page
+      if (!window.location.pathname.includes('/login')) {
+        console.log('Redirecting to login from:', window.location.pathname);
+        window.location.replace('/login');
+      }
     }
     return Promise.reject(error);
   }
